@@ -1,51 +1,119 @@
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import Header from './Header'
 import Container from './Container'
-import {GoogleGenerativeAI} from "@google/generative-ai"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 import Loader from './Loader'
+import Sidebar from './Sidebar'
 
-const googleai=new GoogleGenerativeAI(import.meta.env.VITE_GOGGLE_AI_API_KEY)
-  const gemini=googleai.getGenerativeModel({model:"gemini-3-flash-preview"})
-  const chat=gemini.startChat({history:[]})
+const CHATS = [
+  { id: 2, title: "How to use AI tools API in React Application",
+    messages:[
+      {role:"user",content:"what is better chatgpt or gemini"},
+      {role:"assistant",content:"Hi! can you explain for what type of tasks you will use it?"}
+    ]
+  },
+  { id: 4, title: "How to use AI tools API in React Application",
+    messages:[
+      {role:"user",content:"Hey! how to use ai in my life?"},
+      {role:"assistant",content:"Hi! would you like to use it for work for hobbies?"}
+    ]
+  },
+]
 
+// ✅ spelling fixed here
+const googleai = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_API_KEY)
 
+const gemini = googleai.getGenerativeModel({
+  model: "gemini-3-flash-preview"
+})
+
+// ✅ renamed to avoid collision with state
+const geminiChat = gemini.startChat({ history: [] })
 
 const App = () => {
-  
-  
+
   const [message, setMessage] = useState([])
   const [isloading, setIsloading] = useState(false)
-  function AddMessage(message){
-        setMessage((prevMessage)=>[...prevMessage,message])
+  const [chat, setChats] = useState(CHATS)
+  const [activechatid, setActivechatid] = useState(2)
 
+  const activeChanges = useMemo(
+    ()=> chat.find(({id})=>id===activechatid)?.messages ?? [],
+    [chat, activechatid]
+  )
 
+  useEffect(()=>{
+    setMessage(activeChanges)
+  },[activechatid])
+
+  useEffect(()=>{
+    handleChatmessage(message)
+  },[message])
+
+  function handleChatmessage(message) {
+    updateMessage(message)
   }
-  async function  handleContentChange(content){
-    AddMessage({content,role:"user"});
-    setIsloading(true)
-    try{
-      const result = await chat.sendMessage(content)
-      AddMessage({content: result.response.text(),role:"assistant"})
-    }catch(error){
-            AddMessage({content:"Sorry,I could'nt process your request.Please try Again!!",
-              role:"System"})
 
-    }finally{
+  function updateMessage(message = []) {
+    setChats(prevChats =>
+      prevChats.map(chat =>
+        chat.id === activechatid
+          ? { ...chat, messages: message }
+          : chat
+      )
+    )
+  }
+
+  function AddMessage(message) {
+    setMessage(prev => [...prev, message])
+  }
+
+  async function handleContentChange(content) {
+    AddMessage({ content, role: "user" })
+    setIsloading(true)
+
+    try {
+      // ✅ use geminiChat here
+      const result = await geminiChat.sendMessage(content)
+
+      AddMessage({
+        content: result.response.text(),
+        role: "assistant"
+      })
+
+    } catch (error) {
+      console.error(error)
+      AddMessage({
+        content: "Sorry, I couldn't process your request. Please try again!",
+        role: "system"
+      })
+    } finally {
       setIsloading(false)
     }
-
   }
+
   return (
-    <div>
-      {isloading && <Loader/>}
-      <div className=''>
-      
-      <Header/>
-<Container isDisable={isloading} message={message} onSend={handleContentChange} />
-    </div>
+    <div className="h-screen flex overflow-hidden">
+
+      <div className="w-64 bg-gray-900 text-white flex flex-col">
+        <Sidebar chat={chat}
+          activechatid={activechatid}
+          onActivechatidChange={setActivechatid}
+        />
+      </div>
+
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {isloading && <Loader />}
+        <Header />
+        <Container
+          isDisable={isloading}
+          message={message}
+          onSend={handleContentChange}
+        />
+      </div>
+
     </div>
   )
 }
-
 
 export default App
