@@ -1,7 +1,7 @@
 import React from "react"
 
 
-const Sidebar = ({ chat , activechatid,onActivechatidChange }) => {
+const Sidebar = ({ chat , activechatid,onActivechatidChange,onhandlecreatechat,onActivechat }) => {
   function handleChatClick(chatId){
     onActivechatidChange(chatId)
 
@@ -16,16 +16,16 @@ const Sidebar = ({ chat , activechatid,onActivechatidChange }) => {
 
       {/* New Chat */}
       <div className="p-4">
-        <button className="w-full bg-purple-600 hover:bg-purple-700 p-2 rounded">
+        <button disabled={onActivechat.length===0} onClick={onhandlecreatechat} className="w-full bg-purple-600 hover:bg-purple-700 p-2 rounded">
           + New Chat
         </button>
       </div>
 
       {/* Chat List */}
       <ul className="flex-1 overflow-y-auto px-2 space-y-2">
-  {chat.map((item) => (
+  {chat.filter(chat => chat.messages && chat.messages.length > 0).map((item) => (
     <li key={item.id} onClick={()=>handleChatClick(item.id)} >
-      <button
+      <button 
         className={`w-full text-left p-3 rounded hover:bg-gray-800 transition
         ${item.id === activechatid ? "bg-gray-800" : ""}`}
       >

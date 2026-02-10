@@ -50,15 +50,37 @@ const App = () => {
     handleChatmessage(message)
   },[message])
 
+  function handlecreatenewchat(){
+    const newid=Date.now();
+    setChats(prevChats => [
+      ...prevChats,
+      { id: newid, messages: [] }
+    ]) 
+    setActivechatid(newid) 
+
+
+
+  }
+  function handleActivechat(id) {
+  setActivechatid(id)
+
+  setChats(prevChats =>
+    prevChats.filter(chat => chat.messages && chat.messages.length > 0)
+  )
+}
+
+
   function handleChatmessage(message) {
     updateMessage(message)
   }
 
-  function updateMessage(message = []) {
+  function updateMessage(message ) {
+    const title = message[0]?.content.split(" ").slice(0,7).join(" ")
+
     setChats(prevChats =>
       prevChats.map(chat =>
         chat.id === activechatid
-          ? { ...chat, messages: message }
+          ? { ...chat, title:chat.title??title,messages: message }
           : chat
       )
     )
@@ -98,7 +120,11 @@ const App = () => {
       <div className="w-64 bg-gray-900 text-white flex flex-col">
         <Sidebar chat={chat}
           activechatid={activechatid}
-          onActivechatidChange={setActivechatid}
+          onActivechatidChange={handleActivechat}
+          onhandlecreatechat={handlecreatenewchat}
+          onActivechat={activeChanges}
+          
+
         />
       </div>
 
