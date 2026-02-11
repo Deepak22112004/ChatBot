@@ -28,7 +28,7 @@ const Control = ({isDisable =false,  onSend }) => {
   }
 
   return (
-    <div className="flex items-center gap-3 bg-gray-100 rounded-full px-4 py-2 shadow-inner">
+    <div className="flex items-center gap-2 bg-white/80 border border-gray-200 rounded-2xl px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400 transition-all">
 
       <input
         value={content}
@@ -36,14 +36,14 @@ const Control = ({isDisable =false,  onSend }) => {
         onChange={(e) => setContent(e.target.value)}
         onKeyDown={handleEnterPress}
         type="text"
-        placeholder="Type your message..."
-        className="flex-1 bg-transparent outline-none px-2"
+        placeholder="Type your message here..."
+        className="flex-1 bg-transparent outline-none px-3 py-1 text-gray-700 text-sm md:text-base placeholder:text-gray-400"
       />
 
       <button
         onClick={handleSend}
-        disabled={isDisable}
-        className="bg-gradient-to-r from-blue-500 to-purple-500 p-3 rounded-full shadow-md hover:scale-110 transition"
+        disabled={isDisable || content.trim().length === 0}
+        className="bg-gradient-to-tr from-blue-600 to-indigo-600 disabled:from-gray-400 disabled:to-gray-500 p-2.5 rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all"
       >
         <Sendicon />
       </button>

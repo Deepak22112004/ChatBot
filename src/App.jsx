@@ -1,24 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import Header from './Header'
-import Container from './Container'
+import Header from './components/Header'
+import Container from './components/Container'
 import { GoogleGenerativeAI } from "@google/generative-ai"
-import Loader from './Loader'
-import Sidebar from './Sidebar'
+import Loader from './components/Loader'
+import Sidebar from './components/Sidebar'
 
-const CHATS = [
-  { id: 2, title: "How to use AI tools API in React Application",
-    messages:[
-      {role:"user",content:"what is better chatgpt or gemini"},
-      {role:"assistant",content:"Hi! can you explain for what type of tasks you will use it?"}
-    ]
-  },
-  { id: 4, title: "How to use AI tools API in React Application",
-    messages:[
-      {role:"user",content:"Hey! how to use ai in my life?"},
-      {role:"assistant",content:"Hi! would you like to use it for work for hobbies?"}
-    ]
-  },
-]
+
 
 // ✅ spelling fixed here
 const googleai = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_API_KEY)
@@ -34,8 +21,9 @@ const App = () => {
 
   const [message, setMessage] = useState([])
   const [isloading, setIsloading] = useState(false)
-  const [chat, setChats] = useState(CHATS)
-  const [activechatid, setActivechatid] = useState(2)
+  const [chat, setChats] = useState([])
+  const [activechatid, setActivechatid] = useState()
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   const activeChanges = useMemo(
     ()=> chat.find(({id})=>id===activechatid)?.messages ?? [],
@@ -49,6 +37,26 @@ const App = () => {
   useEffect(()=>{
     handleChatmessage(message)
   },[message])
+  
+  useEffect(()=>{
+    handlecreatenewchat();
+
+
+  },[])
+   
+  function handleDeleteChat(idToDelete) {
+  setChats(prev => {
+    const updated = prev.filter(chat => chat.id !== idToDelete)
+
+    // switch active chat if current one was deleted
+    if (idToDelete === activechatid) {
+      setActivechatid(updated.length ? updated[0].id : null)
+    }
+
+    return updated
+  })
+}
+
 
   function handlecreatenewchat(){
     const newid=Date.now();
@@ -115,22 +123,42 @@ const App = () => {
   }
 
   return (
-    <div className="h-screen flex overflow-hidden">
+    <div className="h-screen flex bg-gray-50 overflow-hidden relative">
 
-      <div className="w-64 bg-gray-900 text-white flex flex-col">
-        <Sidebar chat={chat}
+      {/* Mobile Backdrop */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-20 md:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar Container */}
+      <div className={`
+        fixed inset-y-0 left-0 z-30 w-72 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out
+        md:relative md:translate-x-0
+        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+      `}>
+        <Sidebar 
+          chat={chat}
           activechatid={activechatid}
-          onActivechatidChange={handleActivechat}
-          onhandlecreatechat={handlecreatenewchat}
+          onActivechatidChange={(id) => {
+            handleActivechat(id);
+            setIsSidebarOpen(false); // Close on selection in mobile
+          }}
+          onhandlecreatechat={() => {
+            handlecreatenewchat();
+            setIsSidebarOpen(false); // Close on new chat in mobile
+          }}
           onActivechat={activeChanges}
-          
-
+          onClose={() => setIsSidebarOpen(false)}
+           onDeleteChat={handleDeleteChat}
         />
       </div>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {isloading && <Loader />}
-        <Header />
+        <Header onMenuClick={() => setIsSidebarOpen(true)} />
         <Container
           isDisable={isloading}
           message={message}
